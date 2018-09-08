@@ -4,8 +4,19 @@
   "description": "scrape dominion energy billing",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --coverage --verbose",
+    "pretty": "prettier --write \"**/*.js\""
   },
   "author": "Blake Thomas",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^1.14.2"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "dependencies": {
+    "puppeteer": "^1.8.0"
+  }
 }
