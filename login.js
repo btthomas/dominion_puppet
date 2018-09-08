@@ -1,9 +1,6 @@
-const {
-  user,
-  password,
-} = require('./secrets.json');
+const { user, password } = require('./secrets.json');
 
-const login = async (page) => {
+const login = async page => {
   try {
     await page.click('#user');
     await page.keyboard.type(user);
@@ -23,8 +20,8 @@ const login = async (page) => {
     console.log(error);
     return { error };
   }
-}
+};
 
 module.exports = {
-  login
+  login,
 };

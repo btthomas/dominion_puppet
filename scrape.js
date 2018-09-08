@@ -1,10 +1,10 @@
 const {
   asyncForEach,
   getTextContent,
-  getTextFromSelectors
+  getTextFromSelectors,
 } = require('./utils');
 
-const scrapeHome = async (page) => {
+const scrapeHome = async page => {
   try {
     const DUE_BY =
       '#homepageContent > div:nth-child(3) > div.col-md-6.col-sm-6.col-xs-12 > p > span.bodyTextGreen';
@@ -20,7 +20,7 @@ const scrapeHome = async (page) => {
     const selectors = {
       dueBy: DUE_BY,
       billAmount: BILL_AMOUNT,
-      amountDue: AMOUNT_DUE
+      amountDue: AMOUNT_DUE,
     };
     const text = await getTextFromSelectors(page, selectors);
 
@@ -38,9 +38,9 @@ const scrapeHome = async (page) => {
     console.log(error);
     return { error };
   }
-}
+};
 
-const scrapePastBill = async (page) => {
+const scrapePastBill = async page => {
   try {
     LAST_READ = '#paymentsTable > tbody > tr:nth-child(2) > td:nth-child(1)';
     LAST_USAGE = '#paymentsTable > tbody > tr:nth-child(2) > td:nth-child(3)';
@@ -64,17 +64,16 @@ const scrapePastBill = async (page) => {
     return {
       lastRead,
       lastUsage,
-      prevRead
+      prevRead,
     };
-
   } catch (error) {
     console.log('error with scrape past bill');
     console.log(error);
     return { error };
   }
-}
+};
 
 module.exports = {
   scrapeHome,
-  scrapePastBill
-}
+  scrapePastBill,
+};

@@ -1,17 +1,14 @@
 const puppeteer = require('puppeteer');
-const {
-  scrapeHome,
-  scrapePastBill,
-} = require('./scrape');
-const {
-  login
-} = require('./login');
+const { scrapeHome, scrapePastBill } = require('./scrape');
+const { login } = require('./login');
 
 const showBrowser = !!process.argv[2];
-const options = showBrowser ? {
-  headless: false,
-  slowMo: 1,
-} : {};
+const options = showBrowser
+  ? {
+      headless: false,
+      slowMo: 1,
+    }
+  : {};
 
 // Need to collect:
 // usage (kWh),
@@ -38,11 +35,7 @@ const init = async () => {
     if (response.error) {
       throw new Error(response.error);
     }
-    const {
-      dueBy,
-      billAmount,
-      amountDue,
-    } = response;
+    const { dueBy, billAmount, amountDue } = response;
 
     const url = 'https://mya.dominionenergy.com/usage/analyzeyourenergyusage';
     await page.goto(url);
@@ -51,11 +44,7 @@ const init = async () => {
     if (response.error) {
       throw new Error(response.error);
     }
-    const {
-      lastRead,
-      lastUsage,
-      prevRead
-    } = response;
+    const { lastRead, lastUsage, prevRead } = response;
 
     console.log({
       amountDue,
@@ -65,7 +54,7 @@ const init = async () => {
       lastRead,
       prevRead,
     });
-    console.log('DONE!')
+    console.log('DONE!');
   } catch (e) {
     console.log('error somewhere');
     console.log(e);
