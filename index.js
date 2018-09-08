@@ -1,9 +1,17 @@
-const { user, password } = require('./secrets.json');
-
-console.log({ user });
-console.log({ password });
-
 const puppeteer = require('puppeteer');
+const {
+  scrapeHome,
+  scrapePastBill,
+} = require('./scrape');
+const {
+  login
+} = require('./login');
+
+const showBrowser = !!process.argv[2];
+const options = showBrowser ? {
+  headless: false,
+  slowMo: 1,
+} : {};
 
 // Need to collect:
 // usage (kWh),
@@ -12,141 +20,58 @@ const puppeteer = require('puppeteer');
 // service end date (a.k.a. meter read dates),
 // and bill due date
 
-(async () => {
-  const browser = await puppeteer.launch();
+const init = async () => {
+  const browser = await puppeteer.launch(options);
 
   try {
     let response;
-    const page = await LogIn(browser);
 
-    if (!page) {
-      throw new Error('No Page');
+    const page = await browser.newPage();
+    await page.goto('https://www.dominionenergy.com/sign-in');
+
+    response = await login(page);
+    if (response.error) {
+      throw new Error(response.error);
     }
 
     response = await scrapeHome(page);
     if (response.error) {
-      throw new Error(error);
+      throw new Error(response.error);
     }
-
-    console.log(response);
     const {
       dueBy,
       billAmount,
       amountDue,
     } = response;
 
-    response = await scrapePastBill(page);
+    const url = 'https://mya.dominionenergy.com/usage/analyzeyourenergyusage';
+    await page.goto(url);
 
+    response = await scrapePastBill(page);
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    const {
+      lastRead,
+      lastUsage,
+      prevRead
+    } = response;
+
+    console.log({
+      amountDue,
+      billAmount,
+      dueBy,
+      lastUsage,
+      lastRead,
+      prevRead,
+    });
+    console.log('DONE!')
   } catch (e) {
     console.log('error somewhere');
     console.log(e);
   }
 
   await browser.close();
-})();
+};
 
-async function LogIn(browser) {
-  try {
-    const page = await browser.newPage();
-    await page.goto('https://www.dominionenergy.com/sign-in');
-
-    await page.click('#user');
-    await page.keyboard.type(user);
-
-    await page.click('#password');
-    await page.keyboard.type(password);
-
-    const navigate = page.waitForNavigation({
-      waitUntil: 'networkidle0',
-    });
-    page.click('#SignIn');
-
-    console.log('waiting for navigation');
-    await navigate;
-
-    return page;
-  } catch (e) {
-    console.log('error with log in');
-    console.log(e);
-    return false;
-  }
-}
-
-const asyncForEach = async (array, callback) => {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array)
-  }
-}
-
-const getTextContent = (el) => el.textContent;
-
-const getTextFromSelectors = async (page, selectors) => {
-  let text = {};
-  const keys = Object.keys(selectors);
-  const sels = keys.map(key => selectors[key]); 
-  await asyncForEach(sels, async (selector, index) => {
-    const handle = await page.$(selector);
-    text[keys[index]] = await page.evaluate(getTextContent, handle);
-  });
-  return text;
-}
-
-async function scrapeHome(page) {
-  try {
-    console.log('scrapeHome');
-
-    const DUE_BY =
-      '#homepageContent > div:nth-child(3) > div.col-md-6.col-sm-6.col-xs-12 > p > span.bodyTextGreen';
-    const BILL_AMOUNT =
-      '#homepageContent > div:nth-child(7) > div:nth-child(2) > p';
-    const AMOUNT_DUE =
-      '#homepageContent > div:nth-child(3) > div:nth-child(2) > p > span';
-
-    await page.waitForSelector(DUE_BY);
-    await page.waitForSelector(BILL_AMOUNT);
-    await page.waitForSelector(AMOUNT_DUE);
-    console.log('home ready');
-
-    const selectors = {
-      dueBy: DUE_BY,
-      billAmount: BILL_AMOUNT,
-      amountDue: AMOUNT_DUE
-    };
-    const text = await getTextFromSelectors(page, selectors);
-
-    const dueBy = new Date(text.dueBy.trim());
-    const billAmount = text.billAmount.trim();
-    const amountDue = text.amountDue.trim();
-
-    return {
-      dueBy,
-      billAmount,
-      amountDue,
-    };
-  } catch (error) {
-    console.log('error with scrape home');
-    console.log(error);
-    return { error };
-  }
-}
-
-async function scrapePastBill(page) {
-  try {
-    const url = 'https://mya.dominionenergy.com/usage/analyzeyourenergyusage';
-    await page.goto(url);
-
-    LAST_READ = '#paymentsTable > tbody > tr:nth-child(2) > td:nth-child(1)';
-    LAST_USAGE = '#paymentsTable > tbody > tr:nth-child(2) > td:nth-child(3)';
-    PREV_READ = '#paymentsTable > tbody > tr:nth-child(3) > td:nth-child(1)';
-
-    await page.waitForSelector(LAST_READ);
-    await page.waitForSelector(LAST_USAGE);
-    await page.waitForSelector(PREV_READ);
-    console.log('past bill ready');
-
-  } catch (error) {
-    console.log('error with scrape past bill');
-    console.log(error);
-    return { error };
-  }
-}
+init();
