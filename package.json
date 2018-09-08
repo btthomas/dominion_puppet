@@ -1,0 +1,11 @@
+{
+  "name": "puppetdominion",
+  "version": "1.0.0",
+  "description": "scrape dominion energy billing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Blake Thomas",
+  "license": "MIT"
+}
