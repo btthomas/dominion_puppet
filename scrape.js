@@ -22,6 +22,7 @@ const scrapeHome = async page => {
       billAmount: BILL_AMOUNT,
       amountDue: AMOUNT_DUE,
     };
+
     const text = await getTextFromSelectors(page, selectors);
 
     const dueBy = new Date(text.dueBy.trim());
@@ -55,6 +56,7 @@ const scrapePastBill = async page => {
       lastUsage: LAST_USAGE,
       prevRead: PREV_READ,
     };
+
     const text = await getTextFromSelectors(page, selectors);
 
     const lastRead = new Date(text.lastRead.trim());
