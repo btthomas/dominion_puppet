@@ -80,6 +80,17 @@ const asyncForEach = async (array, callback) => {
 
 const getTextContent = (el) => el.textContent;
 
+const getTextFromSelectors = async (page, selectors) => {
+  let text = {};
+  const keys = Object.keys(selectors);
+  const sels = keys.map(key => selectors[key]); 
+  await asyncForEach(sels, async (selector, index) => {
+    const handle = await page.$(selector);
+    text[keys[index]] = await page.evaluate(getTextContent, handle);
+  });
+  return text;
+}
+
 async function scrapeHome(page) {
   try {
     console.log('scrapeHome');
@@ -96,17 +107,16 @@ async function scrapeHome(page) {
     await page.waitForSelector(AMOUNT_DUE);
     console.log('home ready');
 
-    const selectors = [DUE_BY, BILL_AMOUNT, AMOUNT_DUE];
+    const selectors = {
+      dueBy: DUE_BY,
+      billAmount: BILL_AMOUNT,
+      amountDue: AMOUNT_DUE
+    };
+    const text = await getTextFromSelectors(page, selectors);
 
-    let text = [];
-    await asyncForEach(selectors, async (selector, index) => {
-      const handle = await page.$(selector);
-      text[index] = await page.evaluate(getTextContent, handle);
-    });
-
-    const dueBy = new Date(text[0].trim());
-    const billAmount = text[1].trim();
-    const amountDue = text[2].trim();
+    const dueBy = new Date(text.dueBy.trim());
+    const billAmount = text.billAmount.trim();
+    const amountDue = text.amountDue.trim();
 
     return {
       dueBy,
