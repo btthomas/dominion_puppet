@@ -72,6 +72,14 @@ async function LogIn(browser) {
   }
 }
 
+const asyncForEach = async (array, callback) => {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array)
+  }
+}
+
+const getTextContent = (el) => el.textContent;
+
 async function scrapeHome(page) {
   try {
     console.log('scrapeHome');
@@ -88,23 +96,17 @@ async function scrapeHome(page) {
     await page.waitForSelector(AMOUNT_DUE);
     console.log('home ready');
 
-    const dueByText = await page.evaluate(
-      (DUE_BY) => document.querySelector(DUE_BY).textContent,
-      DUE_BY
-    );
-    const dueBy = new Date(dueByText.trim());
+    const selectors = [DUE_BY, BILL_AMOUNT, AMOUNT_DUE];
 
-    const billAmountText = await page.evaluate(
-      (BILL_AMOUNT) => document.querySelector(BILL_AMOUNT).textContent,
-      BILL_AMOUNT
-    );
-    const billAmount = billAmountText.trim();
+    let text = [];
+    await asyncForEach(selectors, async (selector, index) => {
+      const handle = await page.$(selector);
+      text[index] = await page.evaluate(getTextContent, handle);
+    });
 
-    const amountDueText = await page.evaluate(
-      (AMOUNT_DUE) => document.querySelector(AMOUNT_DUE).textContent,
-      AMOUNT_DUE
-    );
-    const amountDue = amountDueText.trim();
+    const dueBy = new Date(text[0].trim());
+    const billAmount = text[1].trim();
+    const amountDue = text[2].trim();
 
     return {
       dueBy,
@@ -119,8 +121,22 @@ async function scrapeHome(page) {
 }
 
 async function scrapePastBill(page) {
-  const url = 'https://mya.dominionenergy.com/usage/analyzeyourenergyusage';
-  await page.goto(url);
+  try {
+    const url = 'https://mya.dominionenergy.com/usage/analyzeyourenergyusage';
+    await page.goto(url);
 
-  
+    LAST_READ = '#paymentsTable > tbody > tr:nth-child(2) > td:nth-child(1)';
+    LAST_USAGE = '#paymentsTable > tbody > tr:nth-child(2) > td:nth-child(3)';
+    PREV_READ = '#paymentsTable > tbody > tr:nth-child(3) > td:nth-child(1)';
+
+    await page.waitForSelector(LAST_READ);
+    await page.waitForSelector(LAST_USAGE);
+    await page.waitForSelector(PREV_READ);
+    console.log('past bill ready');
+
+  } catch (error) {
+    console.log('error with scrape past bill');
+    console.log(error);
+    return { error };
+  }
 }
